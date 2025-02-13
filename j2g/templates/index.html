@@ -11,12 +11,8 @@
         <h1 class="text-center">Jenkinsfile to GitHub Actions Converter</h1>
         <form method="POST" enctype="multipart/form-data">
             <div class="mb-3">
-                <label for="jenkinsfile" class="form-label">Upload Jenkinsfile</label>
-                <input class="form-control" type="file" name="jenkinsfile" required>
-            </div>
-            <div class="mb-3">
-                <label for="yaml_filename" class="form-label">Output YAML Filename</label>
-                <input class="form-control" type="text" name="yaml_filename" placeholder="github-actions.yml" required>
+                <label for="jenkinsfiles" class="form-label">Upload Multiple Jenkinsfiles</label>
+                <input class="form-control" type="file" name="jenkinsfiles" multiple required>
             </div>
             <button type="submit" class="btn btn-primary">Convert</button>
         </form>
