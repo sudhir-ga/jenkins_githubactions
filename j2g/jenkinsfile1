@@ -1,0 +1,36 @@
+pipeline {
+    agent any
+    tools {
+        nodejs '12'
+        jdk '11'
+    }
+    environment {
+        BRANCH_NAME = 'main'
+        DEPLOY_ENV = 'production'
+    }
+    stages {
+        stage('Build') {
+            steps {
+                sh 'echo Building...'
+            }
+        }
+        stage('Test') {
+            steps {
+                sh 'echo Running tests...'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                sh 'echo Deploying to ${DEPLOY_ENV} environment...'
+            }
+        }
+    }
+    post {
+        success {
+            echo 'Build succeeded!'
+        }
+        failure {
+            echo 'Build failed.'
+        }
+    }
+}

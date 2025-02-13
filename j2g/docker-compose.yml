@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  jenkins-to-github:
+    build:
+      context: .
+    volumes:
+      - .:/app
+    command: ["jenkinsfile", "/app/github-actions.yml"]
+

@@ -6,11 +6,11 @@ WORKDIR /app
 
 # Copy the Python script and requirements.txt (if needed)
 COPY jenkins2githubactions.py /app/
-COPY requirements.txt /app/  # If you have external dependencies
+#COPY requirements.txt /app/  # If you have external dependencies
 
 # Install dependencies
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install PyYAML
 
 # Run the Python script when the container starts
 ENTRYPOINT ["python", "/app/jenkins2githubactions.py"]
