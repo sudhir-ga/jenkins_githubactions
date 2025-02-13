@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Copy the Python script and requirements.txt (if needed)
 COPY jenkins2githubactions.py /app/
-COPY requirements.txt /app/  # If you have external dependencies
+COPY test.txt /app/  # If you have external dependencies
 
 # Install Python dependencies (if applicable)
 RUN pip install --no-cache-dir -r requirements.txt
