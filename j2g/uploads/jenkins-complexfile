@@ -1,0 +1,114 @@
+pipeline {
+    agent any
+
+    environment {
+        APP_NAME = 'my-awesome-app'
+        DOCKER_REGISTRY = 'docker.io/mydockerhub'
+        DOCKER_IMAGE = "${DOCKER_REGISTRY}/${APP_NAME}:${BUILD_NUMBER}"
+    }
+
+    options {
+        timeout(time: 60, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timestamps()
+    }
+
+    parameters {
+        string(name: 'BRANCH', defaultValue: 'main', description: 'Git branch to build')
+        booleanParam(name: 'DEPLOY_TO_PROD', defaultValue: false, description: 'Deploy to production?')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo "Checking out branch: ${params.BRANCH}"
+                git branch: params.BRANCH, url: 'https://github.com/your-repo/my-awesome-app.git'
+            }
+        }
+
+        stage('Build') {
+            parallel {
+                stage('Unit Tests') {
+                    agent { docker { image 'python:3.9' } }
+                    steps {
+                        echo 'Running unit tests...'
+                        sh '''
+                            python -m venv venv
+                            . venv/bin/activate
+                            pip install -r requirements.txt
+                            pytest tests/
+                        '''
+                    }
+                }
+
+                stage('Static Analysis') {
+                    steps {
+                        echo 'Running static analysis...'
+                        sh 'flake8 .'
+                    }
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo "Building Docker image: ${DOCKER_IMAGE}"
+                sh "docker build -t ${DOCKER_IMAGE} ."
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${DOCKER_IMAGE}
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Staging') {
+            steps {
+                echo 'Deploying to staging...'
+                sh './deploy.sh staging'
+            }
+        }
+
+        stage('Manual Approval for Production') {
+            when {
+                expression { params.DEPLOY_TO_PROD }
+            }
+            steps {
+                input message: 'Approve deployment to production?'
+            }
+        }
+
+        stage('Deploy to Production') {
+            when {
+                expression { params.DEPLOY_TO_PROD }
+            }
+            steps {
+                echo 'Deploying to production...'
+                sh './deploy.sh production'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up workspace...'
+            cleanWs()
+        }
+        success {
+            echo 'Build succeeded!'
+            archiveArtifacts artifacts: '**/target/*.jar', allowEmptyArchive: true
+        }
+        failure {
+            echo 'Build failed!'
+            mail to: 'team@example.com',
+                 subject: "Failed Build: ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
+                 body: "Check the Jenkins job at ${env.BUILD_URL}."
+        }
+    }
+}
